@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/selarashomeid/api/v1/test": {
+        "/api/v1/test": {
             "get": {
                 "description": "Test",
                 "consumes": [

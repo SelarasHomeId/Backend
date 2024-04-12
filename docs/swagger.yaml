@@ -30,7 +30,7 @@ info:
   title: selarashomeid
   version: 1.0.0
 paths:
-  /selarashomeid/api/v1/test:
+  /api/v1/test:
     get:
       consumes:
       - application/json

@@ -31,7 +31,7 @@ func NewHandler(f *factory.Factory) *handler {
 // @Failure      401      {object}  res.errorResponse
 // @Failure      404      {object}  res.errorResponse
 // @Failure      500      {object}  res.errorResponse
-// @Router       /selarashomeid/api/v1/test [get]
+// @Router       /api/v1/test [get]
 func (h *handler) Test(c echo.Context) error {
 	cc := c.(*abstraction.Context)
 
