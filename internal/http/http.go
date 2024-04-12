@@ -29,6 +29,6 @@ func Init(e *echo.Echo, f *factory.Factory) {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// routes
-	api_v1 := e.Group("/selarashomeid/api/v1")
+	api_v1 := e.Group("/api/v1")
 	test.NewHandler(f).Route(api_v1)
 }
