@@ -20,13 +20,13 @@ func Init(e *echo.Echo, f *factory.Factory) {
 	)
 
 	// index
-	e.GET("/api", func(c echo.Context) error {
+	e.GET("/", func(c echo.Context) error {
 		message := fmt.Sprintf("Hello there, welcome to app %s version %s ", APP, VERSION)
 		return c.String(http.StatusOK, message)
 	})
 
 	// docs
-	e.GET("/api/swagger/*", echoSwagger.WrapHandler)
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// routes
 	v1 := e.Group("/api/v1")

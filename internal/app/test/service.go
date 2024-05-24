@@ -6,7 +6,6 @@ import (
 	"selarashomeid/internal/factory"
 	"selarashomeid/internal/repository"
 
-	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
 
@@ -17,17 +16,14 @@ type Service interface {
 type service struct {
 	Repository repository.Test
 	Db         *gorm.DB
-	DbRedis    *redis.Client
 }
 
 func NewService(f *factory.Factory) Service {
 	repository := f.TestRepository
 	db := f.Db
-	redis := f.DbRedis
 	return &service{
 		repository,
 		db,
-		redis,
 	}
 }
 

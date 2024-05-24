@@ -11,7 +11,6 @@ import (
 type Configuration struct {
 	DB      DB
 	Logging Logging
-	Redis   Redis
 }
 
 type DB struct {
@@ -25,13 +24,6 @@ type DB struct {
 type Logging struct {
 	GormLevel   string
 	LogrusLevel string
-}
-
-type Redis struct {
-	RedisAddress  string
-	RedisPort     string
-	RedisUser     string
-	RedisPassword string
 }
 
 var lock = &sync.Mutex{}
@@ -58,10 +50,6 @@ func Init() *Configuration {
 	defaultConfig.DB.DbName = os.Getenv("DB_NAME")
 	defaultConfig.Logging.GormLevel = os.Getenv("GORM_LEVEL")
 	defaultConfig.Logging.LogrusLevel = os.Getenv("LOGRUS_LEVEL")
-	defaultConfig.Redis.RedisAddress = os.Getenv("REDIS_ADDRESS")
-	defaultConfig.Redis.RedisPassword = os.Getenv("REDIS_PASSWORD")
-	defaultConfig.Redis.RedisPort = os.Getenv("REDIS_PORT")
-	defaultConfig.Redis.RedisUser = os.Getenv("REDIS_USER")
 
 	return &defaultConfig
 }

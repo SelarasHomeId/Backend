@@ -4,14 +4,11 @@ import (
 	"selarashomeid/internal/repository"
 	"selarashomeid/pkg/database"
 
-	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
 
 type Factory struct {
 	Db *gorm.DB
-
-	DbRedis *redis.Client
 
 	// repository
 	Repository_initiated
@@ -24,7 +21,6 @@ type Repository_initiated struct {
 func NewFactory() *Factory {
 	f := &Factory{}
 	f.SetupDb()
-	f.SetupDbRedis()
 	f.SetupRepository()
 	return f
 }
@@ -35,11 +31,6 @@ func (f *Factory) SetupDb() {
 		panic("Failed setup db, connection is undefined")
 	}
 	f.Db = db
-}
-
-func (f *Factory) SetupDbRedis() {
-	dbRedis := database.InitRedis()
-	f.DbRedis = dbRedis
 }
 
 func (f *Factory) SetupRepository() {
