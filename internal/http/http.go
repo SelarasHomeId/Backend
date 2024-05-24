@@ -26,12 +26,13 @@ func Init(e *echo.Echo, f *factory.Factory) {
 		message := fmt.Sprintf("Hello there, welcome to app %s version %s ", APP, VERSION)
 		return c.String(http.StatusOK, message)
 	})
+	api := e.Group("/api")
 
 	// docs
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// routes
-	test.NewHandler(f).Route(e.Group("/test"))
-	contact.NewHandler(f).Route(e.Group("/contact"))
-	affiliate.NewHandler(f).Route(e.Group("/affiliate"))
+	test.NewHandler(f).Route(api.Group("/test"))
+	contact.NewHandler(f).Route(api.Group("/contact"))
+	affiliate.NewHandler(f).Route(api.Group("/affiliate"))
 }
