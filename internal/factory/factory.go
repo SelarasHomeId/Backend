@@ -15,7 +15,9 @@ type Factory struct {
 }
 
 type Repository_initiated struct {
-	TestRepository repository.Test
+	TestRepository      repository.Test
+	ContactRepository   repository.Contact
+	AffiliateRepository repository.Affiliate
 }
 
 func NewFactory() *Factory {
@@ -38,6 +40,7 @@ func (f *Factory) SetupRepository() {
 		panic("Failed setup repository, db is undefined")
 	}
 
-	// test
-	f.TestRepository = repository.NewTest
+	f.TestRepository = repository.NewTest(f.Db)
+	f.ContactRepository = repository.NewContact(f.Db)
+	f.AffiliateRepository = repository.NewAffiliate(f.Db)
 }
