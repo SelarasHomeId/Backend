@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	_ "selarashomeid/docs"
+	"selarashomeid/internal/app/affiliate"
+	"selarashomeid/internal/app/contact"
 	"selarashomeid/internal/app/test"
 	"selarashomeid/internal/factory"
 	"selarashomeid/pkg/constant"
@@ -29,6 +31,7 @@ func Init(e *echo.Echo, f *factory.Factory) {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	// routes
-	v1 := e.Group("/api/v1")
-	test.NewHandler(f).Route(v1)
+	test.NewHandler(f).Route(e.Group("/test"))
+	contact.NewHandler(f).Route(e.Group("/contact"))
+	affiliate.NewHandler(f).Route(e.Group("/affiliate"))
 }

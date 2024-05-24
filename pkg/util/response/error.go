@@ -173,7 +173,6 @@ func (e *Error) Send(c echo.Context) error {
 	id := shortid.MustGenerate()
 
 	if e.ErrorMessage != nil {
-		e.Response.Meta.ErrorId = &id
 		errorMessage = fmt.Sprintf("%+v", errors.WithStack(e.ErrorMessage))
 	}
 
