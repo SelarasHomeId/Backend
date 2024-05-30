@@ -11,6 +11,7 @@ import (
 type Configuration struct {
 	DB      DB
 	Logging Logging
+	JWT     JWT
 }
 
 type DB struct {
@@ -24,6 +25,10 @@ type DB struct {
 type Logging struct {
 	GormLevel   string
 	LogrusLevel string
+}
+
+type JWT struct {
+	SecretKey string
 }
 
 var lock = &sync.Mutex{}
@@ -50,6 +55,7 @@ func Init() *Configuration {
 	defaultConfig.DB.DbName = os.Getenv("DB_NAME")
 	defaultConfig.Logging.GormLevel = os.Getenv("GORM_LEVEL")
 	defaultConfig.Logging.LogrusLevel = os.Getenv("LOGRUS_LEVEL")
+	defaultConfig.JWT.SecretKey = os.Getenv("SECRET_KEY")
 
 	return &defaultConfig
 }

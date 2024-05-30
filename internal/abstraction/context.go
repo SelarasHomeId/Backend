@@ -7,7 +7,14 @@ import (
 
 type Context struct {
 	echo.Context
-	Trx *TrxContext
+	Auth *AuthContext
+	Trx  *TrxContext
+}
+
+type AuthContext struct {
+	ID       int
+	Username string
+	Email    string
 }
 
 type TrxContext struct {
