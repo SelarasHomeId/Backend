@@ -64,20 +64,16 @@ func (r RefreshTokenRequest) RefreshTokenClaims() (*modeltoken.RefreshTokenClaim
 		if jwtErrValidation, ok := err.(*jwt.ValidationError); ok {
 			c := token.Claims.(jwt.MapClaims)
 			return &modeltoken.RefreshTokenClaims{
-				ID:       c["id"].(string),
-				Username: c["username"].(string),
-				Email:    c["email"].(string),
-				Exp:      int64(c["exp"].(float64)),
+				ID:  c["id"].(string),
+				Exp: int64(c["exp"].(float64)),
 			}, jwtErrValidation
 		}
 		return nil, jwt.NewValidationError("invalid_refresh_token", jwt.ValidationErrorMalformed)
 	}
 	c := token.Claims.(jwt.MapClaims)
 	return &modeltoken.RefreshTokenClaims{
-		ID:       c["id"].(string),
-		Username: c["username"].(string),
-		Email:    c["email"].(string),
-		Exp:      int64(c["exp"].(float64)),
+		ID:  c["id"].(string),
+		Exp: int64(c["exp"].(float64)),
 	}, nil
 }
 

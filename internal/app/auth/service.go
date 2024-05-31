@@ -130,7 +130,18 @@ func (s *service) RefreshToken(ctx *abstraction.Context, payload *dto.RefreshTok
 		return nil, response.CustomErrorBuilder(http.StatusUnauthorized, "unauthorized_to_refresh_token", "unauthorized_to_refresh_token", "access token cannot contains with refresh token")
 	}
 
+	data, err := s.AdminRepository.FindById(ctx, refreshTokenAuthCtx.ID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.Unauthorized, errors.New("username or password is incorrect"))
+		}
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+
 	accessTokenClaims = refreshTokenClaims.AccessTokenClaims()
+	accessTokenClaims.Username = encoding.Encode(data.Username)
+	accessTokenClaims.Email = encoding.Encode(data.Email)
+
 	authToken := modeltoken.NewAuthToken(accessTokenClaims)
 	accessToken, err := authToken.AccessToken()
 	if err != nil {
