@@ -10,6 +10,7 @@ import (
 type Admin interface {
 	FindByUsername(ctx *abstraction.Context, username string) (data *model.AdminEntityModel, err error)
 	FindById(ctx *abstraction.Context, id int) (data *model.AdminEntityModel, err error)
+	Update(ctx *abstraction.Context, data *model.AdminEntityModel) *gorm.DB
 }
 
 type admin struct {
@@ -32,4 +33,8 @@ func (r *admin) FindByUsername(ctx *abstraction.Context, username string) (data 
 func (r *admin) FindById(ctx *abstraction.Context, id int) (data *model.AdminEntityModel, err error) {
 	err = r.CheckTrx(ctx).Where("id = ?", id).Take(&data).Error
 	return
+}
+
+func (r *admin) Update(ctx *abstraction.Context, data *model.AdminEntityModel) *gorm.DB {
+	return r.CheckTrx(ctx).Model(data).Where("id = ?", data.ID).Updates(data)
 }

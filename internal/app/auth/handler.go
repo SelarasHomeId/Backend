@@ -56,3 +56,19 @@ func (h *handler) RefreshToken(c echo.Context) error {
 	}
 	return response.SuccessResponse(data).Send(c)
 }
+
+func (h *handler) ChangePassword(c echo.Context) error {
+	cc := c.(*abstraction.Context)
+	payload := new(dto.ChangePasswordRequest)
+	if err := c.Bind(payload); err != nil {
+		return response.ErrorBuilder(&response.ErrorConstant.BadRequest, err).Send(c)
+	}
+	if err := c.Validate(payload); err != nil {
+		return response.ErrorBuilder(&response.ErrorConstant.Validation, err).Send(c)
+	}
+	data, err := h.service.ChangePassword(cc, payload)
+	if err != nil {
+		return response.ErrorResponse(err).Send(c)
+	}
+	return response.SuccessResponse(data).Send(c)
+}

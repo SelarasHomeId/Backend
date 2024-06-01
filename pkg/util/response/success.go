@@ -1,7 +1,10 @@
 package response
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
+	"selarashomeid/internal/abstraction"
 
 	"github.com/labstack/echo/v4"
 )
@@ -38,13 +41,12 @@ func SuccessBuilder(res *Success, data interface{}) *Success {
 	return res
 }
 
-func CustomSuccessBuilder(code int, data interface{}, message string, Info string) *Success {
+func CustomSuccessBuilder(code int, data interface{}, message string) *Success {
 	return &Success{
 		Response: successResponse{
 			Meta: Meta{
 				Success: true,
 				Message: message,
-				Info:    &Info,
 			},
 			Data: data,
 		},
@@ -58,4 +60,27 @@ func SuccessResponse(data interface{}) *Success {
 
 func (s *Success) Send(c echo.Context) error {
 	return c.JSON(s.Code, s.Response)
+}
+
+func (s *Success) WithPagination(info *abstraction.PaginationInfo) *Success {
+	return &Success{
+		Response: successResponse{
+			Meta: Meta{
+				Success: s.Response.Meta.Success,
+				Message: s.Response.Meta.Message,
+				Info:    info,
+			},
+			Data: s.Response.Data,
+		},
+		Code: s.Code,
+	}
+}
+
+func SendExcelData(c echo.Context, filename string, data bytes.Buffer) error {
+	filename = filename + ".xlsx"
+	c.Response().Header().Set(echo.HeaderContentType, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", filename))
+	c.Response().Header().Set(echo.HeaderContentLength, fmt.Sprint(len(data.Bytes())))
+
+	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data.Bytes())
 }

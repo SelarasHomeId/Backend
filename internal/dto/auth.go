@@ -64,7 +64,6 @@ func (r RefreshTokenRequest) RefreshTokenClaims() (*modeltoken.RefreshTokenClaim
 		if jwtErrValidation, ok := err.(*jwt.ValidationError); ok {
 			c := token.Claims.(jwt.MapClaims)
 			return &modeltoken.RefreshTokenClaims{
-				ID:  c["id"].(string),
 				Exp: int64(c["exp"].(float64)),
 			}, jwtErrValidation
 		}
@@ -72,7 +71,6 @@ func (r RefreshTokenRequest) RefreshTokenClaims() (*modeltoken.RefreshTokenClaim
 	}
 	c := token.Claims.(jwt.MapClaims)
 	return &modeltoken.RefreshTokenClaims{
-		ID:  c["id"].(string),
 		Exp: int64(c["exp"].(float64)),
 	}, nil
 }
@@ -80,4 +78,10 @@ func (r RefreshTokenRequest) RefreshTokenClaims() (*modeltoken.RefreshTokenClaim
 type RefreshTokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type ChangePasswordRequest struct {
+	Id          int    `param:"id" validate:"required"`
+	OldPassword string `json:"old_password" form:"old_password" validate:"required"`
+	NewPassword string `json:"new_password" form:"new_password" validate:"required"`
 }

@@ -136,18 +136,16 @@ var ErrorConstant errorConstant = errorConstant{
 }
 
 func ErrorBuilder(res *Error, message error) *Error {
-	msg := message.Error()
-	res.Response.Meta.Info = &msg
+	res.Response.Meta.Message = message.Error()
 	return res
 }
 
-func CustomErrorBuilder(code int, err string, message string, Info string) *Error {
+func CustomErrorBuilder(code int, err string, message string) *Error {
 	return &Error{
 		Response: errorResponse{
 			Meta: Meta{
 				Success: false,
 				Message: message,
-				Info:    &Info,
 			},
 			Error: err,
 		},

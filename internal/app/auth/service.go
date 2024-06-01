@@ -14,6 +14,7 @@ import (
 	"selarashomeid/pkg/util/aescrypt"
 	"selarashomeid/pkg/util/encoding"
 	"selarashomeid/pkg/util/response"
+	"selarashomeid/pkg/util/trxmanager"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -25,6 +26,7 @@ type Service interface {
 	Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest) (*dto.AuthLoginResponse, error)
 	Logout(ctx *abstraction.Context) (map[string]interface{}, error)
 	RefreshToken(ctx *abstraction.Context, payload *dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error)
+	ChangePassword(ctx *abstraction.Context, payload *dto.ChangePasswordRequest) (map[string]interface{}, error)
 }
 
 type service struct {
@@ -99,38 +101,30 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 
 func (s *service) Logout(ctx *abstraction.Context) (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"message": "Logout successful",
+		"message": "success",
 	}, nil
 }
 
 func (s *service) RefreshToken(ctx *abstraction.Context, payload *dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error) {
 	accessTokenClaims, err := payload.AccessTokenClaims()
 	if err != nil && err.(*jwt.ValidationError).Errors != jwt.ValidationErrorExpired {
-		return nil, response.CustomErrorBuilder(http.StatusBadRequest, "invalid_access_token", "invalid_access_token", err.Error())
+		return nil, response.CustomErrorBuilder(http.StatusBadRequest, err.Error(), "invalid_access_token")
 	}
 	accessTokenAuthCtx, err := accessTokenClaims.AuthContext()
 	if err != nil {
-		return nil, response.CustomErrorBuilder(http.StatusBadRequest, err.Error(), "invalid_access_token", err.Error())
+		return nil, response.CustomErrorBuilder(http.StatusBadRequest, err.Error(), "invalid_access_token")
 	}
 
 	refreshTokenClaims, err := payload.RefreshTokenClaims()
 	if err != nil {
 		if jwtValErr := err.(*jwt.ValidationError); jwtValErr.Errors == jwt.ValidationErrorExpired {
-			return nil, response.CustomErrorBuilder(http.StatusUnauthorized, "refresh_token_is_expired", "refresh_token_is_expired", err.Error())
+			return nil, response.CustomErrorBuilder(http.StatusUnauthorized, err.Error(), "refresh_token_is_expired")
 		} else {
-			return nil, response.CustomErrorBuilder(http.StatusBadRequest, jwtValErr.Error(), "invalid_refresh_token", err.Error())
+			return nil, response.CustomErrorBuilder(http.StatusBadRequest, jwtValErr.Error(), "invalid_refresh_token")
 		}
 	}
-	refreshTokenAuthCtx, err := refreshTokenClaims.AuthContext()
-	if err != nil {
-		return nil, response.CustomErrorBuilder(http.StatusBadRequest, err.Error(), "invalid_refresh_token", err.Error())
-	}
 
-	if refreshTokenAuthCtx.ID != accessTokenAuthCtx.ID {
-		return nil, response.CustomErrorBuilder(http.StatusUnauthorized, "unauthorized_to_refresh_token", "unauthorized_to_refresh_token", "access token cannot contains with refresh token")
-	}
-
-	data, err := s.AdminRepository.FindById(ctx, refreshTokenAuthCtx.ID)
+	data, err := s.AdminRepository.FindById(ctx, accessTokenAuthCtx.ID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, response.ErrorBuilder(&response.ErrorConstant.Unauthorized, errors.New("username or password is incorrect"))
@@ -139,21 +133,66 @@ func (s *service) RefreshToken(ctx *abstraction.Context, payload *dto.RefreshTok
 	}
 
 	accessTokenClaims = refreshTokenClaims.AccessTokenClaims()
+
+	var encryptedUserID string
+	if encryptedUserID, err = s.encryptTokenClaims(data.ID); err != nil {
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+	accessTokenClaims.ID = encryptedUserID
 	accessTokenClaims.Username = encoding.Encode(data.Username)
 	accessTokenClaims.Email = encoding.Encode(data.Email)
 
 	authToken := modeltoken.NewAuthToken(accessTokenClaims)
 	accessToken, err := authToken.AccessToken()
 	if err != nil {
-		return nil, response.CustomErrorBuilder(http.StatusUnauthorized, err.Error(), "err_generate_access_token", err.Error())
+		return nil, response.CustomErrorBuilder(http.StatusUnauthorized, err.Error(), "err_generate_access_token")
 	}
 	refreshToken, err := authToken.RefreshToken()
 	if err != nil {
-		return nil, response.CustomErrorBuilder(http.StatusUnauthorized, err.Error(), "err_generate_refresh_token", err.Error())
+		return nil, response.CustomErrorBuilder(http.StatusUnauthorized, err.Error(), "err_generate_refresh_token")
 	}
 
 	return &dto.RefreshTokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+	}, nil
+}
+
+func (s *service) ChangePassword(ctx *abstraction.Context, payload *dto.ChangePasswordRequest) (map[string]interface{}, error) {
+	if payload.Id != ctx.Auth.ID {
+		return nil, response.CustomErrorBuilder(http.StatusNotAcceptable, "failed change password", "your request id is not matching!")
+	}
+	if err := trxmanager.New(s.DB).WithTrx(ctx, func(ctx *abstraction.Context) error {
+		userData, err := s.AdminRepository.FindById(ctx, payload.Id)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return response.ErrorBuilder(&response.ErrorConstant.Unauthorized, errors.New("admin not found"))
+			}
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+		if err = bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(payload.OldPassword)); err != nil {
+			return response.CustomErrorBuilder(http.StatusBadRequest, "Request Failed", "Your password is wrong!")
+		}
+		password := []byte(payload.NewPassword)
+		hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+		if err != nil {
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+
+		if err := s.AdminRepository.Update(ctx, &model.AdminEntityModel{
+			Context: ctx,
+			AdminEntity: model.AdminEntity{
+				Password: string(hashedPassword),
+			},
+			ID: payload.Id,
+		}).Error; err != nil {
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"message": "success",
 	}, nil
 }

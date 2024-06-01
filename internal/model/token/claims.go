@@ -70,14 +70,12 @@ func (c AccessTokenClaims) AuthContext() (*abstraction.AuthContext, error) {
 
 func (c AccessTokenClaims) RefreshTokenClaims() *RefreshTokenClaims {
 	return &RefreshTokenClaims{
-		ID:  c.ID,
 		Exp: time.Now().Add(time.Duration(24 * time.Hour)).Unix(),
 	}
 }
 
 type RefreshTokenClaims struct {
-	ID  string `json:"id"`
-	Exp int64  `json:"exp"`
+	Exp int64 `json:"exp"`
 
 	jwt.RegisteredClaims
 }
@@ -110,7 +108,6 @@ func (c RefreshTokenClaims) AuthContext() (*abstraction.AuthContext, error) {
 
 func (c RefreshTokenClaims) AccessTokenClaims() *AccessTokenClaims {
 	return &AccessTokenClaims{
-		ID:  c.ID,
 		Exp: time.Now().Add(time.Duration(1 * time.Hour)).Unix(),
 	}
 }

@@ -1,6 +1,11 @@
 package contact
 
 import (
+	"bytes"
+	"errors"
+	"fmt"
+	"math"
+	"net/http"
 	"selarashomeid/internal/abstraction"
 	"selarashomeid/internal/dto"
 	"selarashomeid/internal/factory"
@@ -10,11 +15,16 @@ import (
 	"selarashomeid/pkg/util/response"
 	"selarashomeid/pkg/util/trxmanager"
 
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
 
 type Service interface {
 	Create(ctx *abstraction.Context, payload *dto.ContactCreateRequest) (map[string]interface{}, error)
+	Find(ctx *abstraction.Context, f *dto.ContactFilter, p *abstraction.Pagination) ([]*model.ContactEntityModel, *abstraction.PaginationInfo, error)
+	FindByID(ctx *abstraction.Context, payload *dto.ContactFindByIDRequest) (*model.ContactEntityModel, error)
+	DeleteByID(ctx *abstraction.Context, payload *dto.ContactDeleteByIDRequest) (map[string]interface{}, error)
+	Export(ctx *abstraction.Context) (string, *bytes.Buffer, error)
 }
 
 type service struct {
@@ -40,7 +50,7 @@ func (s *service) Create(ctx *abstraction.Context, payload *dto.ContactCreateReq
 				Email:     payload.Email,
 				Phone:     payload.Phone,
 				Message:   payload.Message,
-				CreatedAt: *general.DateTodayLocal(),
+				CreatedAt: *general.NowLocal(),
 			},
 		}).Error; err != nil {
 			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
@@ -49,8 +59,95 @@ func (s *service) Create(ctx *abstraction.Context, payload *dto.ContactCreateReq
 	}); err != nil {
 		return nil, err
 	}
-	data = map[string]interface{}{
+	return map[string]interface{}{
 		"message": "success",
+	}, nil
+}
+
+func (s *service) Find(ctx *abstraction.Context, f *dto.ContactFilter, p *abstraction.Pagination) ([]*model.ContactEntityModel, *abstraction.PaginationInfo, error) {
+	var (
+		data []*model.ContactEntityModel
+		info *abstraction.PaginationInfo
+		err  error
+	)
+	if data, info, err = s.ContactRepository.Find(ctx, f, p); err != nil {
+		return nil, nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+	if p != nil && p.PageSize != nil {
+		info.Pages = int(math.Ceil(float64(info.Count) / float64(*p.PageSize)))
+		if len(data) > *p.PageSize {
+			data = data[:len(data)-1]
+			info.MoreRecords = true
+		}
+	}
+	return data, info, nil
+}
+
+func (s *service) FindByID(ctx *abstraction.Context, payload *dto.ContactFindByIDRequest) (*model.ContactEntityModel, error) {
+	var (
+		data *model.ContactEntityModel
+		err  error
+	)
+	if data, err = s.ContactRepository.FindByID(ctx, payload.ID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.NotFound, err)
+		}
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
 	}
 	return data, nil
+}
+
+func (s *service) DeleteByID(ctx *abstraction.Context, payload *dto.ContactDeleteByIDRequest) (data map[string]interface{}, err error) {
+	if err = s.ContactRepository.DeleteByID(ctx, payload.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.NotFound, err)
+		}
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+	return map[string]interface{}{
+		"message": "success",
+	}, nil
+}
+
+func (s *service) Export(ctx *abstraction.Context) (string, *bytes.Buffer, error) {
+	data, err := s.ContactRepository.GetAll(ctx)
+	if err != nil {
+		return "", nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+
+	f := excelize.NewFile()
+	sheet := "Data Contact Customer"
+	index, err := f.NewSheet(sheet)
+	if err != nil {
+		return "", nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+	f.SetActiveSheet(index)
+	f.SetCellValue(sheet, "A1", "No")
+	f.SetCellValue(sheet, "B1", "Nama")
+	f.SetCellValue(sheet, "C1", "Email")
+	f.SetCellValue(sheet, "D1", "Telepon")
+	f.SetCellValue(sheet, "E1", "Pesan")
+	f.SetCellValue(sheet, "F1", "Tanggal")
+	for i, v := range data {
+		colA := fmt.Sprintf("A%d", i+2)
+		colB := fmt.Sprintf("B%d", i+2)
+		colC := fmt.Sprintf("C%d", i+2)
+		colD := fmt.Sprintf("D%d", i+2)
+		colE := fmt.Sprintf("E%d", i+2)
+		colF := fmt.Sprintf("F%d", i+2)
+		no := i + 1
+		f.SetCellValue(sheet, colA, no)
+		f.SetCellValue(sheet, colB, v.Name)
+		f.SetCellValue(sheet, colC, v.Email)
+		f.SetCellValue(sheet, colD, v.Phone)
+		f.SetCellValue(sheet, colE, v.Message)
+		f.SetCellValue(sheet, colF, v.CreatedAt)
+	}
+
+	var buf bytes.Buffer
+	if err := f.Write(&buf); err != nil {
+		return "", nil, response.CustomErrorBuilder(http.StatusInternalServerError, err.Error(), "Failed to generate Excel file")
+	}
+	filename := fmt.Sprintf("ExportData-Contact-Customer_%s", general.NowLocal().Format("2006-01-02_15:04:05"))
+	return filename, &buf, nil
 }
