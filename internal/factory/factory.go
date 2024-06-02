@@ -15,10 +15,11 @@ type Factory struct {
 }
 
 type Repository_initiated struct {
-	TestRepository      repository.Test
-	ContactRepository   repository.Contact
-	AffiliateRepository repository.Affiliate
-	AdminRepository     repository.Admin
+	TestRepository         repository.Test
+	ContactRepository      repository.Contact
+	AffiliateRepository    repository.Affiliate
+	AdminRepository        repository.Admin
+	NotificationRepository repository.Notification
 }
 
 func NewFactory() *Factory {
@@ -45,4 +46,5 @@ func (f *Factory) SetupRepository() {
 	f.ContactRepository = repository.NewContact(f.Db)
 	f.AffiliateRepository = repository.NewAffiliate(f.Db)
 	f.AdminRepository = repository.NewAdmin(f.Db)
+	f.NotificationRepository = repository.NewNotification(f.Db)
 }

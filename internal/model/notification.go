@@ -10,6 +10,8 @@ type NotificationEntity struct {
 	Message   string    `json:"message"`
 	IsRead    bool      `json:"is_read"`
 	CreatedAt time.Time `json:"created_at"`
+	Module    string    `json:"module"`
+	Url       string    `json:"url"`
 }
 
 // NotificationEntityModel ...
@@ -26,4 +28,12 @@ type NotificationEntityModel struct {
 // TableName ...
 func (NotificationEntityModel) TableName() string {
 	return "notification"
+}
+
+type CountNotificationUnread struct {
+	CountUnread int `json:"count_unread"`
+}
+
+type SetNotificationRead struct {
+	ID int `param:"id"`
 }

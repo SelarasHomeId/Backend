@@ -28,14 +28,16 @@ type Service interface {
 }
 
 type service struct {
-	AffiliateRepository repository.Affiliate
+	AffiliateRepository    repository.Affiliate
+	NotificationRepository repository.Notification
 
 	DB *gorm.DB
 }
 
 func NewService(f *factory.Factory) Service {
 	return &service{
-		AffiliateRepository: f.AffiliateRepository,
+		AffiliateRepository:    f.AffiliateRepository,
+		NotificationRepository: f.NotificationRepository,
 
 		DB: f.Db,
 	}
@@ -43,7 +45,7 @@ func NewService(f *factory.Factory) Service {
 
 func (s *service) Create(ctx *abstraction.Context, payload *dto.AffiliateCreateRequest) (data map[string]interface{}, err error) {
 	if err = trxmanager.New(s.DB).WithTrx(ctx, func(ctx *abstraction.Context) error {
-		if err = s.AffiliateRepository.Create(ctx, &model.AffiliateEntityModel{
+		modelAffiliate := &model.AffiliateEntityModel{
 			Context: ctx,
 			AffiliateEntity: model.AffiliateEntity{
 				Name:      payload.Name,
@@ -52,6 +54,20 @@ func (s *service) Create(ctx *abstraction.Context, payload *dto.AffiliateCreateR
 				Instagram: payload.Instagram,
 				Tiktok:    payload.Tiktok,
 				CreatedAt: *general.NowLocal(),
+			},
+		}
+		if err = s.AffiliateRepository.Create(ctx, modelAffiliate).Error; err != nil {
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+		if err = s.NotificationRepository.Create(ctx, &model.NotificationEntityModel{
+			Context: ctx,
+			NotificationEntity: model.NotificationEntity{
+				Title:     fmt.Sprintf("Affiliate Request from %s", payload.Name),
+				Message:   "Click to see details",
+				IsRead:    false,
+				CreatedAt: *general.NowLocal(),
+				Module:    "affiliate",
+				Url:       fmt.Sprintf("/api/affiliate/%d", modelAffiliate.ID),
 			},
 		}).Error; err != nil {
 			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)

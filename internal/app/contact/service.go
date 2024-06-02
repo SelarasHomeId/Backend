@@ -28,14 +28,16 @@ type Service interface {
 }
 
 type service struct {
-	ContactRepository repository.Contact
+	ContactRepository      repository.Contact
+	NotificationRepository repository.Notification
 
 	DB *gorm.DB
 }
 
 func NewService(f *factory.Factory) Service {
 	return &service{
-		ContactRepository: f.ContactRepository,
+		ContactRepository:      f.ContactRepository,
+		NotificationRepository: f.NotificationRepository,
 
 		DB: f.Db,
 	}
@@ -43,7 +45,7 @@ func NewService(f *factory.Factory) Service {
 
 func (s *service) Create(ctx *abstraction.Context, payload *dto.ContactCreateRequest) (data map[string]interface{}, err error) {
 	if err = trxmanager.New(s.DB).WithTrx(ctx, func(ctx *abstraction.Context) error {
-		if err = s.ContactRepository.Create(ctx, &model.ContactEntityModel{
+		modelContact := &model.ContactEntityModel{
 			Context: ctx,
 			ContactEntity: model.ContactEntity{
 				Name:      payload.Name,
@@ -51,6 +53,20 @@ func (s *service) Create(ctx *abstraction.Context, payload *dto.ContactCreateReq
 				Phone:     payload.Phone,
 				Message:   payload.Message,
 				CreatedAt: *general.NowLocal(),
+			},
+		}
+		if err = s.ContactRepository.Create(ctx, modelContact).Error; err != nil {
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+		if err = s.NotificationRepository.Create(ctx, &model.NotificationEntityModel{
+			Context: ctx,
+			NotificationEntity: model.NotificationEntity{
+				Title:     fmt.Sprintf("Customer (%s) give your message", payload.Name),
+				Message:   "Click to see details",
+				IsRead:    false,
+				CreatedAt: *general.NowLocal(),
+				Module:    "contact",
+				Url:       fmt.Sprintf("/api/contact/%d", modelContact.ID),
 			},
 		}).Error; err != nil {
 			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
