@@ -18,8 +18,8 @@ func Init(e *echo.Echo) {
 	e.Use(
 		echoMiddleware.Recover(),
 		echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-			AllowOrigins: []string{"*"},
-			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "x-user-id", "ngrok-skip-browser-warning", echo.HeaderAuthorization, echo.HeaderAccessControlAllowOrigin},
+			AllowOrigins: []string{"https://selarashome.my.id"},
+			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "x-user-id", "ngrok-skip-browser-warning", echo.HeaderAuthorization},
 			AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodOptions, http.MethodPatch},
 		}),
 		echoMiddleware.LoggerWithConfig(echoMiddleware.LoggerConfig{
@@ -31,6 +31,14 @@ func Init(e *echo.Echo) {
 			XFrameOptions: "DENY",
 		}),
 	)
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "https://selarashome.my.id")
+			c.Response().Header().Set(echo.HeaderAccessControlAllowMethods, "GET,POST,PUT,DELETE,OPTIONS,PATCH")
+			c.Response().Header().Set(echo.HeaderAccessControlAllowHeaders, "Origin,Content-Type,Accept,Authorization")
+			return next(c)
+		}
+	})
 	e.HTTPErrorHandler = ErrorHandler
 	e.Validator = &validator.CustomValidator{Validator: validator.NewValidator()}
 }
