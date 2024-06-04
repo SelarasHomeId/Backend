@@ -10,6 +10,7 @@ import (
 	"selarashomeid/pkg/util/response"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -139,6 +140,8 @@ func Logout(next echo.HandlerFunc) echo.HandlerFunc {
 		if !ok {
 			return response.ErrorBuilder(&response.ErrorConstant.Unauthorized, err).Send(c)
 		}
+
+		claims["exp"] = time.Now().Unix()
 
 		destructID := claims["id"]
 		if destructID == nil {
