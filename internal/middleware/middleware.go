@@ -18,8 +18,8 @@ func Init(e *echo.Echo) {
 	e.Use(
 		echoMiddleware.Recover(),
 		echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-			AllowOrigins: []string{"*"},
-			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "x-user-id", "ngrok-skip-browser-warning"},
+			AllowOrigins: []string{"*", "https://selarashome.my.id"},
+			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "x-user-id", "ngrok-skip-browser-warning", echo.HeaderAuthorization, echo.HeaderAccessControlAllowOrigin},
 			AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodOptions, http.MethodHead, http.MethodPatch},
 		}),
 		echoMiddleware.LoggerWithConfig(echoMiddleware.LoggerConfig{
