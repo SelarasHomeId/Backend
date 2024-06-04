@@ -19,7 +19,8 @@ func Init(e *echo.Echo) {
 		echoMiddleware.Recover(),
 		echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
 			AllowOrigins: []string{"*"},
-			AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodPatch},
+			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, "x-user-id", "ngrok-skip-browser-warning", echo.HeaderAuthorization, echo.HeaderAccessControlAllowOrigin},
+			AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodOptions, http.MethodHead, http.MethodPatch},
 		}),
 		echoMiddleware.LoggerWithConfig(echoMiddleware.LoggerConfig{
 			Format:           fmt.Sprintf("\n| %s | Host: ${host} | Time: ${time_custom} | Status: ${status} | LatencyHuman: ${latency_human} | UserAgent: ${user_agent} | RemoteIp: ${remote_ip} | Method: ${method} | Uri: ${uri} |\n", APP),
