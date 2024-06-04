@@ -50,7 +50,7 @@ func main() {
 	defer cancel()
 
 	go func() {
-		runNgrok := false
+		runNgrok := true
 		addr := ""
 		if runNgrok {
 			listener := ngrok.Run()
