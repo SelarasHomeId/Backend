@@ -10,7 +10,6 @@ import (
 	"selarashomeid/pkg/util/response"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -141,8 +140,6 @@ func Logout(next echo.HandlerFunc) echo.HandlerFunc {
 			return response.ErrorBuilder(&response.ErrorConstant.Unauthorized, err).Send(c)
 		}
 
-		claims["exp"] = time.Now().Unix()
-
 		destructID := claims["id"]
 		if destructID == nil {
 			return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "invalid_token").Send(c)
@@ -162,7 +159,6 @@ func Logout(next echo.HandlerFunc) echo.HandlerFunc {
 		if username, err = encoding.Decode(fmt.Sprintf("%v", destructUsername)); err != nil {
 			return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "invalid_token").Send(c)
 		}
-
 		destructEmail := claims["email"]
 		if destructEmail == nil {
 			return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "invalid_token").Send(c)

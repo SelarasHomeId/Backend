@@ -17,6 +17,7 @@ import (
 	"selarashomeid/pkg/util/trxmanager"
 	"time"
 
+	"github.com/allegro/bigcache/v3"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -32,14 +33,16 @@ type Service interface {
 type service struct {
 	AdminRepository repository.Admin
 
-	DB *gorm.DB
+	DB       *gorm.DB
+	BigCache *bigcache.BigCache
 }
 
 func NewService(f *factory.Factory) Service {
 	return &service{
 		AdminRepository: f.AdminRepository,
 
-		DB: f.Db,
+		DB:       f.Db,
+		BigCache: f.BigCache,
 	}
 }
 
@@ -85,6 +88,8 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
 	}
 
+	s.BigCache.Set(fmt.Sprintf("token_%d", data.ID), []byte(accessToken))
+
 	return &dto.AuthLoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -100,6 +105,12 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 }
 
 func (s *service) Logout(ctx *abstraction.Context) (map[string]interface{}, error) {
+	if cache, _ := s.BigCache.Get(fmt.Sprintf("token_%d", ctx.Auth.ID)); string(cache) == "" {
+		return nil, response.ErrorBuilder(&response.ErrorConstant.BadRequest, errors.New("user already logout"))
+	} else {
+		s.BigCache.Set(fmt.Sprintf("token_%d", ctx.Auth.ID), []byte(""))
+	}
+
 	return map[string]interface{}{
 		"message": "success",
 	}, nil
