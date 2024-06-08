@@ -90,15 +90,15 @@ func RedirectTo(c echo.Context, module string, option *string) error {
 	url := ""
 	switch module {
 	case "instagram":
-		url = constant.INSTAGRAM
+		url = constant.LINK_INSTAGRAM
 	case "tiktok":
-		url = constant.TIKTOK
+		url = constant.LINK_TIKTOK
 	case "facebook":
-		url = constant.FACEBOOK
+		url = constant.LINK_FACEBOOK
 	case "whatsapp":
 		if option != nil {
-			url = constant.WHATSAPP + *option
+			url = constant.LINK_WHATSAPP + *option
 		}
 	}
-	return c.Redirect(http.StatusMovedPermanently, url)
+	return c.Redirect(http.StatusFound, url)
 }
