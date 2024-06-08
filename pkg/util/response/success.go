@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"selarashomeid/internal/abstraction"
+	"selarashomeid/pkg/constant"
 
 	"github.com/labstack/echo/v4"
 )
@@ -83,4 +84,21 @@ func SendExcelData(c echo.Context, filename string, data bytes.Buffer) error {
 	c.Response().Header().Set(echo.HeaderContentLength, fmt.Sprint(len(data.Bytes())))
 
 	return c.Blob(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data.Bytes())
+}
+
+func RedirectTo(c echo.Context, module string, option *string) error {
+	url := ""
+	switch module {
+	case "instagram":
+		url = constant.INSTAGRAM
+	case "tiktok":
+		url = constant.TIKTOK
+	case "facebook":
+		url = constant.FACEBOOK
+	case "whatsapp":
+		if option != nil {
+			url = constant.WHATSAPP + *option
+		}
+	}
+	return c.Redirect(http.StatusMovedPermanently, url)
 }

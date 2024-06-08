@@ -25,6 +25,7 @@ type Repository_initiated struct {
 	AffiliateRepository    repository.Affiliate
 	AdminRepository        repository.Admin
 	NotificationRepository repository.Notification
+	AccessRepository       repository.Access
 }
 
 func NewFactory() *Factory {
@@ -58,4 +59,5 @@ func (f *Factory) SetupRepository() {
 	f.AffiliateRepository = repository.NewAffiliate(f.Db)
 	f.AdminRepository = repository.NewAdmin(f.Db)
 	f.NotificationRepository = repository.NewNotification(f.Db)
+	f.AccessRepository = repository.NewAccess(f.Db)
 }

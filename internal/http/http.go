@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	_ "selarashomeid/docs"
+	"selarashomeid/internal/app/access"
 	"selarashomeid/internal/app/affiliate"
 	"selarashomeid/internal/app/auth"
 	"selarashomeid/internal/app/contact"
@@ -39,4 +40,5 @@ func Init(e *echo.Echo, f *factory.Factory) {
 	affiliate.NewHandler(f).Route(api.Group("/affiliate"))
 	auth.NewHandler(f).Route(api.Group("/auth"))
 	notification.NewHandler(f).Route(api.Group("/notification"))
+	access.NewHandler(f).Route(api.Group("/access"))
 }
