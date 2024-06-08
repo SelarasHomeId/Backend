@@ -28,6 +28,7 @@ type Service interface {
 	Logout(ctx *abstraction.Context) (map[string]interface{}, error)
 	RefreshToken(ctx *abstraction.Context, payload *dto.RefreshTokenRequest) (*dto.RefreshTokenResponse, error)
 	ChangePassword(ctx *abstraction.Context, payload *dto.ChangePasswordRequest) (map[string]interface{}, error)
+	ResetPassword(ctx *abstraction.Context, payload *dto.ResetPasswordRequest) (map[string]interface{}, error)
 }
 
 type service struct {
@@ -205,5 +206,32 @@ func (s *service) ChangePassword(ctx *abstraction.Context, payload *dto.ChangePa
 	}
 	return map[string]interface{}{
 		"message": "success",
+	}, nil
+}
+
+func (s *service) ResetPassword(ctx *abstraction.Context, payload *dto.ResetPasswordRequest) (map[string]interface{}, error) {
+	if err := trxmanager.New(s.DB).WithTrx(ctx, func(ctx *abstraction.Context) error {
+		newPassword := "Test12345*"
+		password := []byte(newPassword)
+		hashedPassword, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
+		if err != nil {
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+
+		if err := s.AdminRepository.Update(ctx, &model.AdminEntityModel{
+			Context: ctx,
+			AdminEntity: model.AdminEntity{
+				Password: string(hashedPassword),
+			},
+			ID: payload.Id,
+		}).Error; err != nil {
+			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"message": "Your new password: Test12345*",
 	}, nil
 }

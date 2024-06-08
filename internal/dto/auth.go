@@ -85,3 +85,7 @@ type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password" form:"old_password" validate:"required"`
 	NewPassword string `json:"new_password" form:"new_password" validate:"required"`
 }
+
+type ResetPasswordRequest struct {
+	Id int `param:"id" validate:"required"`
+}
