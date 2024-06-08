@@ -4,6 +4,7 @@ import (
 	"selarashomeid/internal/abstraction"
 	"selarashomeid/internal/dto"
 	"selarashomeid/internal/model"
+	"selarashomeid/pkg/util/general"
 
 	"gorm.io/gorm"
 )
@@ -14,6 +15,7 @@ type Contact interface {
 	FindByID(ctx *abstraction.Context, id int) (data *model.ContactEntityModel, err error)
 	DeleteByID(ctx *abstraction.Context, id int) *gorm.DB
 	GetAll(ctx *abstraction.Context) ([]*model.ContactEntityModel, error)
+	GetCountContact(ctx *abstraction.Context) (data dto.ContactGetCountResponse, err error)
 }
 
 type contact struct {
@@ -83,4 +85,20 @@ func (r *contact) DeleteByID(ctx *abstraction.Context, id int) *gorm.DB {
 func (r *contact) GetAll(ctx *abstraction.Context) (data []*model.ContactEntityModel, err error) {
 	err = r.CheckTrx(ctx).Find(&data).Error
 	return
+}
+
+func (r *contact) GetCountContact(ctx *abstraction.Context) (data dto.ContactGetCountResponse, err error) {
+	currentMonth := int(general.NowLocal().Month())
+	currentYear := general.NowLocal().Year()
+
+	err = r.CheckTrx(ctx).Raw(`
+		SELECT COUNT(*) AS count_contact FROM contact
+		WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+	`, currentMonth, currentYear).Scan(&data).Error
+
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
 }

@@ -32,3 +32,7 @@ type ContactFindByIDRequest struct {
 type ContactDeleteByIDRequest struct {
 	ID int `json:"id" param:"id" query:"id"`
 }
+
+type ContactGetCountResponse struct {
+	CountContact int `json:"count_contact"`
+}

@@ -33,3 +33,11 @@ func (h *handler) Create(c echo.Context) (err error) {
 	}
 	return response.RedirectTo(c, *data.Module, data.Option)
 }
+
+func (h *handler) GetCount(c echo.Context) (err error) {
+	data, err := h.service.GetCount(c.(*abstraction.Context))
+	if err != nil {
+		return response.ErrorResponse(err).Send(c)
+	}
+	return response.SuccessResponse(data).Send(c)
+}

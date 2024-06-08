@@ -33,3 +33,7 @@ type AffiliateFindByIDRequest struct {
 type AffiliateDeleteByIDRequest struct {
 	ID int `json:"id" param:"id" query:"id"`
 }
+
+type AffiliateGetCountResponse struct {
+	CountAffiliate int `json:"count_affiliate"`
+}

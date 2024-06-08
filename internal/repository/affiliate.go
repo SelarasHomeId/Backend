@@ -4,6 +4,7 @@ import (
 	"selarashomeid/internal/abstraction"
 	"selarashomeid/internal/dto"
 	"selarashomeid/internal/model"
+	"selarashomeid/pkg/util/general"
 
 	"gorm.io/gorm"
 )
@@ -14,6 +15,7 @@ type Affiliate interface {
 	FindByID(ctx *abstraction.Context, id int) (data *model.AffiliateEntityModel, err error)
 	DeleteByID(ctx *abstraction.Context, id int) *gorm.DB
 	GetAll(ctx *abstraction.Context) ([]*model.AffiliateEntityModel, error)
+	GetCountAffiliate(ctx *abstraction.Context) (data dto.AffiliateGetCountResponse, err error)
 }
 
 type affiliate struct {
@@ -83,4 +85,20 @@ func (r *affiliate) DeleteByID(ctx *abstraction.Context, id int) *gorm.DB {
 func (r *affiliate) GetAll(ctx *abstraction.Context) (data []*model.AffiliateEntityModel, err error) {
 	err = r.CheckTrx(ctx).Find(&data).Error
 	return
+}
+
+func (r *affiliate) GetCountAffiliate(ctx *abstraction.Context) (data dto.AffiliateGetCountResponse, err error) {
+	currentMonth := int(general.NowLocal().Month())
+	currentYear := general.NowLocal().Year()
+
+	err = r.CheckTrx(ctx).Raw(`
+		SELECT COUNT(*) AS count_affiliate FROM affiliate
+		WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+	`, currentMonth, currentYear).Scan(&data).Error
+
+	if err != nil {
+		return data, err
+	}
+
+	return data, nil
 }
