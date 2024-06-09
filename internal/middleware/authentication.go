@@ -52,7 +52,7 @@ func Authentication(next echo.HandlerFunc) echo.HandlerFunc {
 							return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "invalid_token").Send(c)
 						}
 					}
-					return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "access_token_is_expired").Send(c)
+					return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "token_is_expired").Send(c)
 				}
 				return response.CustomErrorBuilder(http.StatusUnauthorized, response.E_UNAUTHORIZED, "invalid_token").Send(c)
 			}
