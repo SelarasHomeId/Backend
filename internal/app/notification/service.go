@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"errors"
 	"selarashomeid/internal/abstraction"
 	"selarashomeid/internal/factory"
 	"selarashomeid/internal/model"
@@ -14,6 +15,7 @@ type Service interface {
 	Find(ctx *abstraction.Context) ([]*model.NotificationEntityModel, error)
 	CountUnread(ctx *abstraction.Context) (map[string]interface{}, error)
 	SetRead(ctx *abstraction.Context, payload *model.SetNotificationRead) (map[string]interface{}, error)
+	FindByID(ctx *abstraction.Context, payload *model.NotificationFindByIDRequest) (*model.NotificationEntityModel, error)
 }
 
 type service struct {
@@ -61,4 +63,18 @@ func (s *service) SetRead(ctx *abstraction.Context, payload *model.SetNotificati
 	return map[string]interface{}{
 		"message": "success",
 	}, nil
+}
+
+func (s *service) FindByID(ctx *abstraction.Context, payload *model.NotificationFindByIDRequest) (*model.NotificationEntityModel, error) {
+	var (
+		data *model.NotificationEntityModel
+		err  error
+	)
+	if data, err = s.NotificationRepository.FindByID(ctx, payload.ID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.NotFound, err)
+		}
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+	return data, nil
 }

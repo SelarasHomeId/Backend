@@ -66,7 +66,7 @@ func (s *service) Create(ctx *abstraction.Context, payload *dto.ContactCreateReq
 				IsRead:    false,
 				CreatedAt: *general.NowLocal(),
 				Module:    "contact",
-				Url:       fmt.Sprintf("/api/contact/%d", modelContact.ID),
+				DataID:    fmt.Sprintf("%d", modelContact.ID),
 			},
 		}).Error; err != nil {
 			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)

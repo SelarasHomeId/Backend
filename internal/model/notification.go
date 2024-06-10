@@ -11,7 +11,7 @@ type NotificationEntity struct {
 	IsRead    bool      `json:"is_read"`
 	CreatedAt time.Time `json:"created_at"`
 	Module    string    `json:"module"`
-	Url       string    `json:"url"`
+	DataID    string    `json:"data_id"`
 }
 
 // NotificationEntityModel ...
@@ -36,4 +36,8 @@ type CountNotificationUnread struct {
 
 type SetNotificationRead struct {
 	ID int `param:"id"`
+}
+
+type NotificationFindByIDRequest struct {
+	ID int `json:"id" param:"id" query:"id"`
 }

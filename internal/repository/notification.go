@@ -12,6 +12,7 @@ type Notification interface {
 	GetAll(ctx *abstraction.Context) ([]*model.NotificationEntityModel, error)
 	CountUnread(ctx *abstraction.Context) (*int, error)
 	SetRead(ctx *abstraction.Context, data *model.NotificationEntityModel) *gorm.DB
+	FindByID(ctx *abstraction.Context, id int) (data *model.NotificationEntityModel, err error)
 }
 
 type notification struct {
@@ -43,4 +44,9 @@ func (r *notification) CountUnread(ctx *abstraction.Context) (*int, error) {
 
 func (r *notification) SetRead(ctx *abstraction.Context, data *model.NotificationEntityModel) *gorm.DB {
 	return r.CheckTrx(ctx).Model(data).Where("id = ?", data.ID).Update("is_read", true)
+}
+
+func (r *notification) FindByID(ctx *abstraction.Context, id int) (data *model.NotificationEntityModel, err error) {
+	err = r.CheckTrx(ctx).Where("id = ?", id).Take(&data).Error
+	return
 }

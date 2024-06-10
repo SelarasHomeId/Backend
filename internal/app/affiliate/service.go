@@ -67,7 +67,7 @@ func (s *service) Create(ctx *abstraction.Context, payload *dto.AffiliateCreateR
 				IsRead:    false,
 				CreatedAt: *general.NowLocal(),
 				Module:    "affiliate",
-				Url:       fmt.Sprintf("/api/affiliate/%d", modelAffiliate.ID),
+				DataID:    fmt.Sprintf("%d", modelAffiliate.ID),
 			},
 		}).Error; err != nil {
 			return response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)

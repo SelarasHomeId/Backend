@@ -49,3 +49,15 @@ func (h handler) SetRead(c echo.Context) (err error) {
 	}
 	return response.SuccessResponse(data).Send(c)
 }
+
+func (h handler) FindByID(c echo.Context) (err error) {
+	payload := new(model.NotificationFindByIDRequest)
+	if err := c.Bind(payload); err != nil {
+		return response.ErrorBuilder(&response.ErrorConstant.BadRequest, err).Send(c)
+	}
+	var data *model.NotificationEntityModel
+	if data, err = h.service.FindByID(c.(*abstraction.Context), payload); err != nil {
+		return response.ErrorResponse(err).Send(c)
+	}
+	return response.SuccessResponse(data).Send(c)
+}
