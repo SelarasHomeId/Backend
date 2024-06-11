@@ -83,7 +83,17 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
 	}
 
-	s.BigCache.Set(fmt.Sprintf("token_%d", data.ID), []byte(token))
+	keyCache := fmt.Sprintf("token_%d", data.ID)
+	_, err = s.BigCache.Get(keyCache)
+	if err != nil {
+		if err == bigcache.ErrEntryNotFound {
+			s.BigCache.Set(keyCache, []byte(token))
+		} else {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+	} else {
+		return nil, response.ErrorBuilder(&response.ErrorConstant.Unauthorized, errors.New("user already login"))
+	}
 
 	return &dto.AuthLoginResponse{
 		Token: token,
@@ -99,7 +109,8 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 }
 
 func (s *service) Logout(ctx *abstraction.Context) (map[string]interface{}, error) {
-	if cache, _ := s.BigCache.Get(fmt.Sprintf("token_%d", ctx.Auth.ID)); string(cache) == "" {
+	keyCache := fmt.Sprintf("token_%d", ctx.Auth.ID)
+	if cache, _ := s.BigCache.Get(keyCache); string(cache) == "" {
 		return nil, response.ErrorBuilder(&response.ErrorConstant.BadRequest, errors.New("user already logout"))
 	} else {
 		s.BigCache.Set(fmt.Sprintf("token_%d", ctx.Auth.ID), []byte(""))
