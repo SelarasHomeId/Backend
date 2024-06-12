@@ -110,10 +110,15 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 
 func (s *service) Logout(ctx *abstraction.Context) (map[string]interface{}, error) {
 	keyCache := fmt.Sprintf("token_%d", ctx.Auth.ID)
-	if cache, _ := s.BigCache.Get(keyCache); string(cache) == "" {
-		return nil, response.ErrorBuilder(&response.ErrorConstant.BadRequest, errors.New("user already logout"))
+	_, err := s.BigCache.Get(keyCache)
+	if err != nil {
+		if err == bigcache.ErrEntryNotFound {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.BadRequest, errors.New("user already logout"))
+		} else {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
 	} else {
-		s.BigCache.Set(fmt.Sprintf("token_%d", ctx.Auth.ID), []byte(""))
+		s.BigCache.Delete(keyCache)
 	}
 
 	return map[string]interface{}{
