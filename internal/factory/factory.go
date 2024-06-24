@@ -1,19 +1,14 @@
 package factory
 
 import (
-	"context"
 	"selarashomeid/internal/repository"
 	"selarashomeid/pkg/database"
-	"time"
 
-	"github.com/allegro/bigcache/v3"
 	"gorm.io/gorm"
 )
 
 type Factory struct {
 	Db *gorm.DB
-
-	BigCache *bigcache.BigCache
 
 	// repository
 	Repository_initiated
@@ -31,7 +26,6 @@ type Repository_initiated struct {
 func NewFactory() *Factory {
 	f := &Factory{}
 	f.SetupDb()
-	f.SetupBigCache()
 	f.SetupRepository()
 	return f
 }
@@ -42,11 +36,6 @@ func (f *Factory) SetupDb() {
 		panic("Failed setup db, connection is undefined")
 	}
 	f.Db = db
-}
-
-func (f *Factory) SetupBigCache() {
-	cache, _ := bigcache.New(context.Background(), bigcache.DefaultConfig(1*time.Hour))
-	f.BigCache = cache
 }
 
 func (f *Factory) SetupRepository() {

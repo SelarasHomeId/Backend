@@ -17,7 +17,6 @@ import (
 	"selarashomeid/pkg/util/trxmanager"
 	"time"
 
-	"github.com/allegro/bigcache/v3"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -32,16 +31,14 @@ type Service interface {
 type service struct {
 	AdminRepository repository.Admin
 
-	DB       *gorm.DB
-	BigCache *bigcache.BigCache
+	DB *gorm.DB
 }
 
 func NewService(f *factory.Factory) Service {
 	return &service{
 		AdminRepository: f.AdminRepository,
 
-		DB:       f.Db,
-		BigCache: f.BigCache,
+		DB: f.Db,
 	}
 }
 
@@ -83,16 +80,16 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
 	}
 
-	keyCache := fmt.Sprintf("token_%d", data.ID)
-	_, err = s.BigCache.Get(keyCache)
-	if err != nil {
-		if err == bigcache.ErrEntryNotFound {
-			s.BigCache.Set(keyCache, []byte(token))
-		} else {
-			return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
-		}
-	} else {
+	if data.IsLogin {
 		return nil, response.ErrorBuilder(&response.ErrorConstant.Unauthorized, errors.New("user already login"))
+	} else {
+		s.AdminRepository.Update(ctx, &model.AdminEntityModel{
+			AdminEntity: model.AdminEntity{
+				IsLogin: true,
+			},
+			ID:      data.ID,
+			Context: ctx,
+		})
 	}
 
 	return &dto.AuthLoginResponse{
@@ -109,18 +106,13 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 }
 
 func (s *service) Logout(ctx *abstraction.Context) (map[string]interface{}, error) {
-	keyCache := fmt.Sprintf("token_%d", ctx.Auth.ID)
-	_, err := s.BigCache.Get(keyCache)
-	if err != nil {
-		if err == bigcache.ErrEntryNotFound {
-			return nil, response.ErrorBuilder(&response.ErrorConstant.BadRequest, errors.New("user already logout"))
-		} else {
-			return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
-		}
-	} else {
-		s.BigCache.Delete(keyCache)
-	}
-
+	s.AdminRepository.Update(ctx, &model.AdminEntityModel{
+		AdminEntity: model.AdminEntity{
+			IsLogin: false,
+		},
+		ID:      ctx.Auth.ID,
+		Context: ctx,
+	})
 	return map[string]interface{}{
 		"message": "success",
 	}, nil
