@@ -83,13 +83,7 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 	if data.IsLogin {
 		return nil, response.ErrorBuilder(&response.ErrorConstant.Unauthorized, errors.New("user already login"))
 	} else {
-		s.AdminRepository.Update(ctx, &model.AdminEntityModel{
-			AdminEntity: model.AdminEntity{
-				IsLogin: true,
-			},
-			ID:      data.ID,
-			Context: ctx,
-		})
+		s.AdminRepository.UpdateLoginTrue(ctx, data.ID)
 	}
 
 	return &dto.AuthLoginResponse{
@@ -106,13 +100,7 @@ func (s *service) Login(ctx *abstraction.Context, payload *dto.AuthLoginRequest)
 }
 
 func (s *service) Logout(ctx *abstraction.Context) (map[string]interface{}, error) {
-	s.AdminRepository.Update(ctx, &model.AdminEntityModel{
-		AdminEntity: model.AdminEntity{
-			IsLogin: false,
-		},
-		ID:      ctx.Auth.ID,
-		Context: ctx,
-	})
+	s.AdminRepository.UpdateLoginFalse(ctx, ctx.Auth.ID)
 	return map[string]interface{}{
 		"message": "success",
 	}, nil
