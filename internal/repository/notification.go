@@ -32,7 +32,7 @@ func (r *notification) Create(ctx *abstraction.Context, data *model.Notification
 }
 
 func (r *notification) GetAll(ctx *abstraction.Context) (data []*model.NotificationEntityModel, err error) {
-	err = r.CheckTrx(ctx).Find(&data).Error
+	err = r.CheckTrx(ctx).Order("id DESC").Find(&data).Error
 	return
 }
 
