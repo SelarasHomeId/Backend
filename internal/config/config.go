@@ -12,6 +12,7 @@ type Configuration struct {
 	DB      DB
 	Logging Logging
 	JWT     JWT
+	Gomail  Gomail
 }
 
 type DB struct {
@@ -29,6 +30,14 @@ type Logging struct {
 
 type JWT struct {
 	SecretKey string
+}
+
+type Gomail struct {
+	SmtpHost     string
+	SmtpPort     string
+	SenderName   string
+	AuthEmail    string
+	AuthPassword string
 }
 
 var lock = &sync.Mutex{}
@@ -56,6 +65,11 @@ func Init() *Configuration {
 	defaultConfig.Logging.GormLevel = os.Getenv("GORM_LEVEL")
 	defaultConfig.Logging.LogrusLevel = os.Getenv("LOGRUS_LEVEL")
 	defaultConfig.JWT.SecretKey = os.Getenv("SECRET_KEY")
+	defaultConfig.Gomail.SmtpHost = os.Getenv("SMTP_HOST")
+	defaultConfig.Gomail.SmtpPort = os.Getenv("SMTP_PORT")
+	defaultConfig.Gomail.SenderName = os.Getenv("SENDER_NAME")
+	defaultConfig.Gomail.AuthEmail = os.Getenv("AUTH_EMAIL")
+	defaultConfig.Gomail.AuthPassword = os.Getenv("AUTH_PASSWORD")
 
 	return &defaultConfig
 }
