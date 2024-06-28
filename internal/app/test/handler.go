@@ -80,9 +80,7 @@ func (h *handler) TestDrive(c echo.Context) error {
 
 	formFiles := c.Request().MultipartForm.File["files"]
 	var files []*multipart.FileHeader
-	for _, formFile := range formFiles {
-		files = append(files, formFile)
-	}
+	files = append(files, formFiles...)
 
 	data, err := h.service.TestDrive(cc, files)
 	if err != nil {
