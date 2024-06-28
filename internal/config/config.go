@@ -13,6 +13,7 @@ type Configuration struct {
 	Logging Logging
 	JWT     JWT
 	Gomail  Gomail
+	Drive   Drive
 }
 
 type DB struct {
@@ -40,6 +41,11 @@ type Gomail struct {
 	AuthPassword string
 }
 
+type Drive struct {
+	CredentialsDrive  string
+	RefreshTokenDrive string
+}
+
 var lock = &sync.Mutex{}
 var defaultConfig Configuration
 
@@ -65,11 +71,15 @@ func Init() *Configuration {
 	defaultConfig.Logging.GormLevel = os.Getenv("GORM_LEVEL")
 	defaultConfig.Logging.LogrusLevel = os.Getenv("LOGRUS_LEVEL")
 	defaultConfig.JWT.SecretKey = os.Getenv("SECRET_KEY")
+
+	// on development
 	defaultConfig.Gomail.SmtpHost = os.Getenv("SMTP_HOST")
 	defaultConfig.Gomail.SmtpPort = os.Getenv("SMTP_PORT")
 	defaultConfig.Gomail.SenderName = os.Getenv("SENDER_NAME")
 	defaultConfig.Gomail.AuthEmail = os.Getenv("AUTH_EMAIL")
 	defaultConfig.Gomail.AuthPassword = os.Getenv("AUTH_PASSWORD")
+	defaultConfig.Drive.CredentialsDrive = os.Getenv("CREDENTIALS_DRIVE")
+	defaultConfig.Drive.RefreshTokenDrive = os.Getenv("REFRESH_DRIVE")
 
 	return &defaultConfig
 }

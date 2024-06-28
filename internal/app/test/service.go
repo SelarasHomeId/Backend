@@ -1,10 +1,13 @@
 package test
 
 import (
+	"fmt"
+	"mime/multipart"
 	"selarashomeid/internal/abstraction"
 	"selarashomeid/internal/dto"
 	"selarashomeid/internal/factory"
 	"selarashomeid/internal/repository"
+	"selarashomeid/pkg/gdrive"
 	"selarashomeid/pkg/gomail"
 	"selarashomeid/pkg/util/response"
 
@@ -14,6 +17,7 @@ import (
 type Service interface {
 	Test(*abstraction.Context) (*dto.TestResponse, error)
 	TestGomail(*abstraction.Context, string) (*dto.TestResponse, error)
+	TestDrive(*abstraction.Context, []*multipart.FileHeader) (*dto.TestResponse, error)
 }
 
 type service struct {
@@ -44,6 +48,38 @@ func (s *service) TestGomail(ctx *abstraction.Context, recipient string) (*dto.T
 	}
 	result := dto.TestResponse{
 		Message: "Success",
+	}
+	return &result, nil
+}
+
+func (s *service) TestDrive(ctx *abstraction.Context, files []*multipart.FileHeader) (*dto.TestResponse, error) {
+	srvDrive, err := gdrive.InitGoogleDrive()
+	if err != nil {
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+
+	newFolder, err := gdrive.FolderToDrive(srvDrive, "Example New Folder", "root")
+	if err != nil {
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
+	var uploadedFiles []string
+	for _, file := range files {
+		f, err := file.Open()
+		if err != nil {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+		defer f.Close()
+
+		newFile, err := gdrive.FileToDrive(srvDrive, file.Filename, "application/octet-stream", f, newFolder.Id)
+		if err != nil {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+		}
+
+		uploadedFiles = append(uploadedFiles, newFile.Name)
+	}
+
+	result := dto.TestResponse{
+		Message: fmt.Sprintf("Files '%v' uploaded successfully", uploadedFiles),
 	}
 	return &result, nil
 }

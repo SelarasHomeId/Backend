@@ -1,6 +1,7 @@
 package test
 
 import (
+	"mime/multipart"
 	"selarashomeid/internal/abstraction"
 	"selarashomeid/internal/dto"
 	"selarashomeid/internal/factory"
@@ -63,6 +64,27 @@ func (h *handler) TestGomail(c echo.Context) error {
 	}
 
 	data, err := h.service.TestGomail(cc, payload.Recipient)
+	if err != nil {
+		return res.ErrorResponse(err).Send(c)
+	}
+
+	return res.SuccessResponse(data).Send(c)
+}
+
+func (h *handler) TestDrive(c echo.Context) error {
+	cc := c.(*abstraction.Context)
+
+	if err := c.Request().ParseMultipartForm(32 << 20); err != nil {
+		return res.ErrorBuilder(&res.ErrorConstant.BadRequest, err).Send(c)
+	}
+
+	formFiles := c.Request().MultipartForm.File["files"]
+	var files []*multipart.FileHeader
+	for _, formFile := range formFiles {
+		files = append(files, formFile)
+	}
+
+	data, err := h.service.TestDrive(cc, files)
 	if err != nil {
 		return res.ErrorResponse(err).Send(c)
 	}
