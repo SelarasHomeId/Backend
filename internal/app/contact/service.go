@@ -120,6 +120,12 @@ func (s *service) DeleteByID(ctx *abstraction.Context, payload *dto.ContactDelet
 		}
 		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
 	}
+	if err = s.NotificationRepository.DeleteByDataID(ctx, payload.ID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, response.ErrorBuilder(&response.ErrorConstant.NotFound, err)
+		}
+		return nil, response.ErrorBuilder(&response.ErrorConstant.UnprocessableEntity, err)
+	}
 	return map[string]interface{}{
 		"message": "success",
 	}, nil
