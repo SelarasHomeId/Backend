@@ -55,5 +55,5 @@ func (r *notification) FindByID(ctx *abstraction.Context, id int) (data *model.N
 func (r *notification) DeleteByDataID(ctx *abstraction.Context, dataId int) *gorm.DB {
 	return r.CheckTrx(ctx).Scopes(func(tx *gorm.DB) *gorm.DB {
 		return tx.Where("data_id = ?", dataId)
-	}).Delete(&model.ContactEntityModel{})
+	}).Delete(&model.NotificationEntityModel{})
 }
