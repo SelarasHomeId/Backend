@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 
 	"gorm.io/gorm"
@@ -45,6 +46,16 @@ type Pagination struct {
 	once sync.Once
 }
 
+func sanitizeString(input string) string {
+	// Menghapus karakter yang bukan huruf, angka, atau underscore
+	return strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' {
+			return r
+		}
+		return -1
+	}, input)
+}
+
 func (p *Pagination) SetPageInfo(count int64, lenData int) (info *PaginationInfo) {
 	if p != nil && p.PageSize != nil {
 		info = &PaginationInfo{
@@ -78,11 +89,26 @@ func (p *Pagination) SetPageSize(pageSize int) *Pagination {
 }
 
 func (p *Pagination) GetOrderBy() string {
+	// Validasi dan sanitasi untuk OrderBy
+	if p.OrderBy != nil {
+		*p.OrderBy = sanitizeString(*p.OrderBy)
+		if *p.OrderBy == "" {
+			defaultOrderBy := "id"
+			p.OrderBy = &defaultOrderBy
+		}
+	}
+	// Validasi dan sanitasi untuk Order
+	if p.Order != nil {
+		*p.Order = sanitizeString(*p.Order)
+		if *p.Order != "asc" && *p.Order != "desc" {
+			defaultOrder := "desc"
+			p.Order = &defaultOrder
+		}
+	}
 	orderBy := "id"
 	if p.OrderBy != nil {
 		orderBy = *p.OrderBy
 	}
-
 	order := "desc"
 	if p.Order != nil {
 		order = *p.Order
@@ -151,10 +177,31 @@ func (p *Pagination) Init() {
 }
 
 func (p *Pagination) GetOffset() int {
+	// Validasi dan sanitasi untuk Page
+	if p.Page != nil && *p.Page <= 0 {
+		defaultPage := 1
+		p.Page = &defaultPage
+	}
+	// Validasi dan sanitasi untuk PageSize
+	if p.PageSize != nil && *p.PageSize <= 0 {
+		defaultPageSize := 10
+		p.PageSize = &defaultPageSize
+	} else if p.PageSize != nil && *p.PageSize > 100 {
+		maxPageSize := 100
+		p.PageSize = &maxPageSize
+	}
 	return (*p.Page - 1) * *p.PageSize
 }
 
 func (p *Pagination) GetLimit() int {
+	// Validasi dan sanitasi untuk PageSize
+	if p.PageSize != nil && *p.PageSize <= 0 {
+		defaultPageSize := 10
+		p.PageSize = &defaultPageSize
+	} else if p.PageSize != nil && *p.PageSize > 100 {
+		maxPageSize := 100
+		p.PageSize = &maxPageSize
+	}
 	return *p.PageSize + 1
 }
 
